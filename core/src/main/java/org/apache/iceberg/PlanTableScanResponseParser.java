@@ -55,33 +55,6 @@ public class PlanTableScanResponseParser {
     Preconditions.checkArgument(
         response.planStatus() != null, "Invalid response: status can not be null");
 
-    if (response.planStatus() == PlanStatus.SUBMITTED && response.planId() == null) {
-      throw new IllegalArgumentException(
-          "Invalid response: planId to be non-null when status is 'submitted");
-    }
-
-    if (response.planStatus() == PlanStatus.CANCELLED) {
-      throw new IllegalArgumentException(
-          "Invalid response: 'cancelled' is not a valid status for planTableScan");
-    }
-
-    if (response.planStatus() != PlanStatus.COMPLETED
-        && (response.planTasks() != null || response.fileScanTasks() != null)) {
-      throw new IllegalArgumentException(
-          "Invalid response: tasks can only be returned in a 'completed' status");
-    }
-
-    if (response.planStatus() != PlanStatus.SUBMITTED && response.planId() != null) {
-      throw new IllegalArgumentException(
-          "Invalid response: plan-id can only be returned in a 'submitted' status");
-    }
-
-    if ((response.deleteFiles() != null && !response.deleteFiles().isEmpty())
-        && (response.fileScanTasks() == null || response.fileScanTasks().isEmpty())) {
-      throw new IllegalArgumentException(
-          "Invalid response: deleteFiles should only be returned with fileScanTasks that reference them");
-    }
-
     gen.writeStartObject();
     gen.writeStringField(PLAN_STATUS, response.planStatus().status());
 
@@ -136,7 +109,6 @@ public class PlanTableScanResponseParser {
 
   @SuppressWarnings("checkstyle:CyclomaticComplexity")
   public static PlanTableScanResponse fromJson(JsonNode json) {
-    Preconditions.checkArgument(null != json, "Invalid response: planTableScanResponse null");
     Preconditions.checkArgument(
         json != null && !json.isEmpty(),
         "Cannot parse planTableScan response from empty or null object");
@@ -146,6 +118,7 @@ public class PlanTableScanResponseParser {
       String status = JsonUtil.getString(PLAN_STATUS, json);
       planStatus = PlanStatus.fromName(status);
     }
+
     String planId = JsonUtil.getStringOrNull(PLAN_ID, json);
     List<String> planTasks = JsonUtil.getStringListOrNull(PLAN_TASKS, json);
 
@@ -166,42 +139,14 @@ public class PlanTableScanResponseParser {
       JsonNode fileScanTasksArray = json.get(FILE_SCAN_TASKS);
       ImmutableList.Builder<FileScanTask> fileScanTaskBuilder = ImmutableList.builder();
       for (JsonNode fileScanTaskNode : fileScanTasksArray) {
-
-        // TODO we dont have caseSensitive flag at serial/deserial time
         FileScanTask fileScanTask =
-            (FileScanTask) RESTFileScanTaskParser.fromJson(fileScanTaskNode, allDeleteFiles);
+            RESTFileScanTaskParser.fromJson(fileScanTaskNode, allDeleteFiles);
         fileScanTaskBuilder.add(fileScanTask);
       }
       fileScanTasks = fileScanTaskBuilder.build();
     }
 
-    if (planStatus == PlanStatus.SUBMITTED && planId == null) {
-      throw new IllegalArgumentException(
-          "Invalid response: planId to be non-null when status is 'submitted");
-    }
-
-    if (planStatus == PlanStatus.CANCELLED) {
-      throw new IllegalArgumentException(
-          "Invalid response: 'cancelled' is not a valid status for planTableScan");
-    }
-
-    if (planStatus != PlanStatus.COMPLETED && (planTasks != null || fileScanTasks != null)) {
-      throw new IllegalArgumentException(
-          "Invalid response: tasks can only be returned in a 'completed' status");
-    }
-
-    if (planStatus != PlanStatus.SUBMITTED && planId != null) {
-      throw new IllegalArgumentException(
-          "Invalid response: plan-id can only be returned in a 'submitted' status");
-    }
-
-    if ((allDeleteFiles != null && !allDeleteFiles.isEmpty())
-        && (fileScanTasks == null || fileScanTasks.isEmpty())) {
-      throw new IllegalArgumentException(
-          "Invalid response: deleteFiles should only be returned with fileScanTasks that reference them");
-    }
-
-    return new PlanTableScanResponse.Builder()
+    return PlanTableScanResponse.builder()
         .withPlanId(planId)
         .withPlanStatus(planStatus)
         .withPlanTasks(planTasks)
