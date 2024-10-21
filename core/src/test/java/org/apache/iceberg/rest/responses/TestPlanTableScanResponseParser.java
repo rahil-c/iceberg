@@ -32,14 +32,13 @@ import org.apache.iceberg.BaseFileScanTask;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.PartitionSpecParser;
-import org.apache.iceberg.PlanTableScanResponseParser;
 import org.apache.iceberg.SchemaParser;
 import org.apache.iceberg.expressions.Expressions;
 import org.apache.iceberg.expressions.ResidualEvaluator;
 import org.apache.iceberg.rest.PlanStatus;
 import org.junit.jupiter.api.Test;
 
-public class TestPlanTableScanResponse {
+public class TestPlanTableScanResponseParser {
   @Test
   public void nullAndEmptyCheck() {
     assertThatThrownBy(() -> PlanTableScanResponseParser.toJson(null))
