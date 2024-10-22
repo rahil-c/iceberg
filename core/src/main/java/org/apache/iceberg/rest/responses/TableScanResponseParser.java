@@ -106,8 +106,7 @@ class TableScanResponseParser {
           }
         }
 
-        PartitionSpec partitionSpec = specsById.get(fileScanTask.file().specId());
-        RESTFileScanTaskParser.toJson(fileScanTask, deleteFileReferences, partitionSpec, gen);
+        RESTFileScanTaskParser.toJson(fileScanTask, deleteFileReferences, fileScanTask.spec(), gen);
       }
       gen.writeEndArray();
     }
